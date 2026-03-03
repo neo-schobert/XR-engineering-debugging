@@ -6,7 +6,7 @@ using System;
 public static class PlanetData
 {
     public enum Planet { Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune }
-    public enum KeplerParameter { a, e, I, L, longPeri, longNode, b, c, s, f}
+    public enum KeplerParameter { a, e, I, L, longPeri, longNode, b, c, s, f }
 
     /// <summary>
     /// Get planet coordinates at a given time (in AU)
@@ -16,8 +16,8 @@ public static class PlanetData
     /// <returns></returns>
     public static Vector3 GetPlanetPosition(Planet p, DateTime t)
     {
-        float T = (float)(t-new DateTime(2000,1,1)).TotalDays/36525f;
-        float a = GetKeplerParameter(p, KeplerParameter.a)[0] 
+        float T = (float)(t - new DateTime(2000, 1, 1)).TotalDays / 36525f;
+        float a = GetKeplerParameter(p, KeplerParameter.a)[0]
             + (GetKeplerParameter(p, KeplerParameter.a)[1] * T);
         float longPeri = GetKeplerParameter(p, KeplerParameter.longPeri)[0]
                     + (GetKeplerParameter(p, KeplerParameter.longPeri)[1] * T);
@@ -28,8 +28,8 @@ public static class PlanetData
             + (GetKeplerParameter(p, KeplerParameter.L)[1] * T)
             - longPeri
             + (GetKeplerParameter(p, KeplerParameter.b)[0] * T * T)
-            + GetKeplerParameter(p, KeplerParameter.c)[0] * Mathf.Cos(Mathf.Deg2Rad*GetKeplerParameter(p, KeplerParameter.f)[0] * T)
-            + GetKeplerParameter(p, KeplerParameter.s)[0] * Mathf.Sin(Mathf.Deg2Rad*GetKeplerParameter(p, KeplerParameter.f)[0] * T);
+            + GetKeplerParameter(p, KeplerParameter.c)[0] * Mathf.Cos(Mathf.Deg2Rad * GetKeplerParameter(p, KeplerParameter.f)[0] * T)
+            + GetKeplerParameter(p, KeplerParameter.s)[0] * Mathf.Sin(Mathf.Deg2Rad * GetKeplerParameter(p, KeplerParameter.f)[0] * T);
 
         M = M % 360 - 180;
 
@@ -38,7 +38,7 @@ public static class PlanetData
         float e_star = e * 180 / Mathf.PI;
 
 
-        double E = M - (e_star * Mathf.Sin(Mathf.Deg2Rad*M));
+        double E = M - (e_star * Mathf.Sin(Mathf.Deg2Rad * M));
         double deltaE;
         //double deltaM;
         int i = 0;
@@ -46,26 +46,29 @@ public static class PlanetData
         {
             //deltaM = M - E + (e_star * Mathf.Sin((float)(Mathf.Deg2Rad*E)));
             //deltaE = deltaM / (1 - (e_star * Mathf.Cos((float)(Mathf.Deg2Rad*E))));
-            
+
             // Don't know why the serie do not converge with order 2 term (see above)
             // Using only order 1 term instead
             deltaE = M - E + (e_star * Mathf.Sin((float)(Mathf.Deg2Rad * E)));
             E += deltaE;
             i++;
-        } while (Mathf.Abs((float)(deltaE)) > 0.000001 && i<100);
+        } while (Mathf.Abs((float)(deltaE)) > 0.000001 && i < 100);
 
         float x_prime = a * (Mathf.Cos((float)(Mathf.Deg2Rad * E)) - e);
-        float y_prime = a * Mathf.Sqrt(1 - e * e) * Mathf.Sin((float)(Mathf.Deg2Rad*E));
-        
+        float y_prime = a * Mathf.Sqrt(1 - e * e) * Mathf.Sin((float)(Mathf.Deg2Rad * E));
+
         float incl = GetKeplerParameter(p, KeplerParameter.I)[0]
                     + (GetKeplerParameter(p, KeplerParameter.I)[1] * T);
 
-        return new Vector3((Mathf.Cos(Mathf.Deg2Rad * peri) * Mathf.Cos(Mathf.Deg2Rad * longNode) - Mathf.Sin(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * longNode) * Mathf.Cos(Mathf.Deg2Rad * incl)) * x_prime 
-            + (-Mathf.Sin(Mathf.Deg2Rad * peri) * Mathf.Cos(Mathf.Deg2Rad * longNode) - Mathf.Cos(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * longNode) * Mathf.Cos(Mathf.Deg2Rad * incl)) * y_prime,
-            (Mathf.Cos(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * longNode) + Mathf.Sin(Mathf.Deg2Rad * peri) * Mathf.Cos(Mathf.Deg2Rad * longNode) * Mathf.Cos(Mathf.Deg2Rad * incl)) * x_prime
-            + (-Mathf.Sin(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * longNode) + Mathf.Cos(Mathf.Deg2Rad * peri) * Mathf.Cos(Mathf.Deg2Rad * longNode) * Mathf.Cos(Mathf.Deg2Rad * incl)) * y_prime,
-            Mathf.Sin(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * incl) * x_prime
-            + Mathf.Cos(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * incl) * y_prime);
+        float x_final = (Mathf.Cos(Mathf.Deg2Rad * peri) * Mathf.Cos(Mathf.Deg2Rad * longNode) - Mathf.Sin(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * longNode) * Mathf.Cos(Mathf.Deg2Rad * incl)) * x_prime
+            + (-Mathf.Sin(Mathf.Deg2Rad * peri) * Mathf.Cos(Mathf.Deg2Rad * longNode) - Mathf.Cos(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * longNode) * Mathf.Cos(Mathf.Deg2Rad * incl)) * y_prime;
+
+        float y_final = (Mathf.Cos(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * longNode) + Mathf.Sin(Mathf.Deg2Rad * peri) * Mathf.Cos(Mathf.Deg2Rad * longNode) * Mathf.Cos(Mathf.Deg2Rad * incl)) * x_prime
+            + (-Mathf.Sin(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * longNode) + Mathf.Cos(Mathf.Deg2Rad * peri) * Mathf.Cos(Mathf.Deg2Rad * longNode) * Mathf.Cos(Mathf.Deg2Rad * incl)) * y_prime;
+
+        float z_final = Mathf.Sin(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * incl) * x_prime + Mathf.Cos(Mathf.Deg2Rad * peri) * Mathf.Sin(Mathf.Deg2Rad * incl) * y_prime;
+
+        return new Vector3(x_final, z_final, y_final);
     }
 
     private static float[] GetKeplerParameter(Planet planet, KeplerParameter param)
@@ -206,7 +209,7 @@ public static class PlanetData
                     case KeplerParameter.L:
                         return new float[] { 314.20276625f, 428.49512595f };
                     case KeplerParameter.longPeri:
-                        return new float[] { 172.43404441f, 0.09266985f};
+                        return new float[] { 172.43404441f, 0.09266985f };
                     case KeplerParameter.longNode:
                         return new float[] { 73.96250215f, 0.05739699f };
                     case KeplerParameter.b:
@@ -233,7 +236,7 @@ public static class PlanetData
                     case KeplerParameter.longPeri:
                         return new float[] { 46.68158724f, 0.01009938f };
                     case KeplerParameter.longNode:
-                        return new float[] { 131.78635853f, -0.00606302f};
+                        return new float[] { 131.78635853f, -0.00606302f };
                     case KeplerParameter.b:
                         return new float[] { -0.00041348f, 0 };
                     case KeplerParameter.c:

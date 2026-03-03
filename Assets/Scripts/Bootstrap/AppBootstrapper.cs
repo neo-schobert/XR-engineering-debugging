@@ -9,6 +9,9 @@ public class AppBootstrapper : MonoBehaviour
 
     TimeModel timeModel;
     PlanetSystemController controller;
+    public TimeController timeController;
+
+    public OrbitRenderer[] orbitRenderers; // ← ajouter
 
     void Start()
     {
@@ -24,6 +27,17 @@ public class AppBootstrapper : MonoBehaviour
             planets
         );
         
-        timeModel.SetTime(DateTime.Now);
+        // Initialiser les OrbitRenderers
+
+        foreach (var orbit in orbitRenderers)
+        {
+            orbit.Init(ephemeris);
+            timeModel.OnTimeChanged += orbit.UpdateOrbit;
+        }
+
+
+
+        timeController.Init(timeModel);
+
     }
 }
