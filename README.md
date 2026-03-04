@@ -232,3 +232,144 @@ git tag -a v1.2-events -m "Events + OrbitRenderer - simulation temporelle et tra
 git push origin main
 git push origin --tags
 ```
+
+---
+
+---
+
+## v1.3 — Interactions VR : Grab / Échelle / Sélection
+
+### Objectif de cette étape
+
+Transformer la simulation en objet manipulable en VR :
+
+- déplacer le système solaire dans l'espace (grab)
+- modifier son échelle à deux mains (pinch / spread)
+- sélectionner une planète pour afficher ses informations
+
+---
+
+### Flux des interactions
+
+```
+XR Interactable (Handle)
+         ↓
+  Script d'interaction
+         ↓
+     Controller
+         ↓
+       Views
+```
+
+Aucune interaction ne manipule directement les transforms des planètes. Tout passe par un contrôleur dédié.
+
+---
+
+### Structure de la scène
+
+```
+SolarSystemRoot        ← point de manipulation global
+ ├── SolarSystem
+ │    ├── Sun
+ │    ├── Mercury
+ │    ├── Venus
+ │    ├── Earth
+ │    ├── Mars
+ │    ├── Jupiter
+ │    ├── Saturn
+ │    ├── Uranus
+ │    └── Neptune
+ └── Handle            ← poignée de grab + contrôle d'échelle
+```
+
+`SolarSystemRoot` est l'objet racine sur lequel sont appliquées toutes les transformations (position, rotation, échelle). Les planètes en sont enfants, ce qui évite de les modifier individuellement.
+
+---
+
+### Fonctionnalités implémentées
+
+#### 1 — Grab
+
+- Un objet `Handle` porte un `XR Grab Interactable` (Rigidbody kinematic + Collider)
+- Saisir le handle avec **une manette** déplace l'ensemble de `SolarSystemRoot`
+- Logs émis :
+  ```
+  [XR] Table grabbed
+  [XR] Table released
+  ```
+
+#### 2 — Contrôle de l'échelle à deux mains
+
+- L'utilisateur grab le `Handle` avec **les deux manettes simultanément**
+- **Écarter** les manettes → zoom in (agrandissement)
+- **Rapprocher** les manettes → zoom out (réduction)
+- L'échelle est centralisée dans un composant `ScaleController` :
+  - expose une méthode `SetScale(float value)`
+  - applique la transformation sur `SolarSystemRoot`
+  - clamp l'échelle dans des limites définies pour éviter les valeurs aberrantes
+- La distance de référence (`initialHandDistance`) et l'échelle de référence (`initialScale`) sont capturées au moment où le second grab est détecté. L'échelle courante est ensuite calculée par ratio :
+
+```csharp
+float ratio = currentHandDistance / initialHandDistance;
+scaleController.SetScale(initialScale * ratio);
+```
+
+- Logs émis :
+  ```
+  [INPUT] Scale requested
+  [XR] Scale applied
+  [WARN] Scale clamped
+  ```
+
+#### 3 — Sélection de planète et panneau d'informations
+
+- Chaque planète porte un script `PlanetSelectable` :
+  - détectable par un `XR Ray Interactor`
+  - signale la sélection sans contenir de logique UI
+- Un `FocusController` reçoit l'événement et :
+  - enregistre la planète active
+  - active un panneau d'informations (`InfoPanel`)
+- Le panneau affiche :
+  - nom de la planète
+  - distance au Soleil
+  - période orbitale
+  - date simulée courante
+  - la planette elle-même en rotation
+- Un **bouton Fermer** permet de fermer le panneau
+- Le panneau **suit le joueur** — canvas en world space repositionné chaque frame devant le regard
+
+---
+
+### Flux de sélection
+
+```
+Ray Interactor
+      ↓
+PlanetSelectable
+      ↓
+FocusController
+      ↓
+InfoPanel (UI)
+```
+
+---
+
+### Capture — Interactions VR
+
+![Interactions VR - Grab / Échelle / Sélection](images%20rapport/Capture%20v1.3.png)
+
+> Le système solaire est manipulable en VR. Le panneau d'information s'ouvre à la sélection d'une planète et suit le joueur.
+
+---
+
+### Tag Git
+
+```
+v1.3-vr-interactions
+```
+
+```bash
+git tag -a v1.3-vr-interactions -m "VR interactions - grab, scale, planet selection + info panel"
+git push origin main
+git push origin --tags
+```

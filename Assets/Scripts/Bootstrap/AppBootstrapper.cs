@@ -13,6 +13,8 @@ public class AppBootstrapper : MonoBehaviour
 
     public OrbitRenderer[] orbitRenderers; // ← ajouter
 
+    public FocusController focusController;
+    
     void Start()
     {
         Debug.Log("[BOOT] Initializing application");
@@ -35,7 +37,7 @@ public class AppBootstrapper : MonoBehaviour
             timeModel.OnTimeChanged += orbit.UpdateOrbit;
         }
 
-
+        focusController.Init(ephemeris, timeModel);
 
         timeController.Init(timeModel);
 
