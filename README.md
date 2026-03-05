@@ -373,3 +373,133 @@ git tag -a v1.3-vr-interactions -m "VR interactions - grab, scale, planet select
 git push origin main
 git push origin --tags
 ```
+
+---
+
+---
+
+## v1.4 — UI world-space + instrumentation
+
+### Objectif de cette étape
+
+Rendre l'application pilotable et déboguable directement dans le casque :
+
+- un panneau de contrôle world-space accessible via le bouton B
+- un overlay debug toujours visible affichant les métriques clés (désactivable dans le panneau de contrôle)
+- tous les événements critiques loggés avec des tags structurés
+
+---
+
+### Flux UI
+
+```
+Bouton B (right controller)
+          ↓
+    WorldSpaceUI.Toggle()
+          ↓
+    Canvas world-space
+          ↓
+    TimeUIController
+          ↓
+       TimeModel
+```
+
+Le panneau suit le joueur via un billboard smoothé. `WorldSpaceUI` tourne sur le GameObject `App` (toujours actif) pour pouvoir écouter le bouton même quand le Canvas est désactivé.
+
+---
+
+### A — Panneau de contrôle world-space
+
+- **Canvas world-space** interactif avec XR Interaction Toolkit
+- Activé / désactivé avec le **bouton B** du right controller (toggle)
+- À l'ouverture, le panneau se snap instantanément devant le joueur, puis suit en douceur (lerp/slerp)
+- Contenu du panneau :
+
+| Élément             | Rôle                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| Slider date         | Scrub temporel sur la plage `yearMin` → `yearMax` définie dans `SolarSystemConfig` |
+| Slider vitesse      | Contrôle `TimeModel.TimeScale` de `speedMin` à `speedMax`                          |
+| Bouton Play/Pause   | Appelle `TimeModel.Play()` / `TimeModel.Pause()`                                   |
+| Toggle trajectoires | Active/désactive tous les `OrbitRenderer`                                          |
+| Bouton Reset view   | Remet `XROrigin` à l'origine                                                       |
+| Bouton Reset scale  | Appelle `ScaleController.Reset()`                                                  |
+| Bouton Debug        | Toggle l'overlay debug via `DebugOverlayView.Toggle()` (bouton Grab du Contrôleur) |
+| Bouton Close        | Toggle le panneau de contrôle (bouton Grab du Contrôleur)                          |
+
+- Toutes les valeurs de configuration (plages de dates, vitesse min/max, état initial des orbites et du debug) sont centralisées dans `SolarSystemConfig`
+
+---
+
+### B — DebugOverlay
+
+- Canvas **world-space enfant direct de la XR Camera** — toujours visible dans le casque
+- Mis à jour toutes les 200ms pour ne pas peser sur les perfs
+- Contenu affiché :
+
+```
+60 FPS  16.7 ms
+PLAY  12 Jun 2025  x10
+[XR] Table grabbed
+---
+[BOOT] Application ready
+[UI] Playing
+[XR] Scale applied: 1.42
+[INPUT] Scale requested: 1.42
+```
+
+- FPS coloré en vert / jaune / rouge selon le seuil (60 / 30)
+- Dernière action `[INPUT]` ou `[XR]` mise en avant
+- Warnings actifs affichés séparément (3 max, dédupliqués)
+- 4 derniers logs structurés conservés, les anciens sont écrasés
+- Toggle via `DebugOverlayView.Toggle()` — état initial lu depuis `SolarSystemConfig.showDebug`
+
+Setup scène :
+
+```
+XR Origin
+ └── Camera Offset
+      └── Main Camera (XR Camera)
+           └── DebugCanvas        <- Canvas World Space
+                                     Scale : (0.001, 0.001, 0.001)
+                                     Position locale : (0.25, -0.22, 0.5)
+                └── DebugText     <- TextMeshProUGUI
+                                     Anchor : bottom-right
+                                     Font size : 18
+```
+
+---
+
+### C — Logs structurés
+
+Tous les événements critiques suivent le format :
+
+| Tag       | Exemples                         |
+| --------- | -------------------------------- |
+| `[BOOT]`  | initialisation, ready            |
+| `[TIME]`  | mise à jour des planètes         |
+| `[INPUT]` | scale requested, date scrubbed   |
+| `[XR]`    | grabbed, released, scale applied |
+| `[UI]`    | play, pause, orbits shown/hidden |
+| `[PERF]`  | overlay initialized              |
+
+---
+
+### Capture — UI world-space + Debug Overlay
+
+![UI world-space + DebugOverlay](images%20rapport/Capture%20v1.4.png)
+
+> Panneau de contrôle ouvert en VR avec l'overlay debug visible en bas à droite.
+
+---
+
+### Tag Git
+
+```
+v1.4-ui-debug
+```
+
+```bash
+git tag -a v1.4-ui-debug -m "UI world-space + DebugOverlay + logs structures"
+git push origin main
+git push origin --tags
+```

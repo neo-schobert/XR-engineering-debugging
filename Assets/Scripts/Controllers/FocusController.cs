@@ -66,7 +66,6 @@ public class FocusController : MonoBehaviour
         canvasGroup.blocksRaycasts = true;
         planetPreviewSphere.SetActive(true);
         isOpen = true;
-        closeButton.SetActive(true);
     }
 
     void HidePanel()
